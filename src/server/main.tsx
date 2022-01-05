@@ -12,7 +12,14 @@ import {server as WebSocketServer} from 'websocket';
 import {Action} from '../datastructure/actions';
 import {createActionHandler, open, save} from './Orga';
 
-const jsFile = {content: '', hash: '', path: ''};
+type JsFileState = {
+    content: string;
+    mapContent: string;
+    hash: string;
+    path: string;
+};
+
+const jsFile: JsFileState = {content: '', mapContent: '', hash: '', path: ''};
 let cssData = '';
 
 const WEB_SERVER = '/tarot';
@@ -20,10 +27,10 @@ const BUILD_DIR = 'dist';
 const PORT = 8181;
 const IMG_DIR = __dirname + '/../../img/';
 
-function loadJSFile(js: { content: string, hash: string, path: string }, file: string) {
+function loadJSFile(js: JsFileState, file: string) {
     readFile(BUILD_DIR + '/' + file + '.js', 'utf8', (err, data) => {
         if (err) {
-            console.error('Javascript file for browsernot found!');
+            console.error('Javascript file for browser not found!');
             return;
         }
 
@@ -32,6 +39,14 @@ function loadJSFile(js: { content: string, hash: string, path: string }, file: s
         shasum.update(js.content);
         js.hash = shasum.digest('hex');
         js.path = WEB_SERVER + '/static/' + file + '-' + js.hash.substring(0, 16) + '.js';
+    });
+    readFile(BUILD_DIR + '/' + file + '.js.map', 'utf8', (err, data) => {
+        if (err) {
+            console.info('Javascript mapping file for browser not found!');
+            return;
+        }
+
+        js.mapContent = data;
     });
 }
 
@@ -53,7 +68,7 @@ function loadJSCSSFile() {
 
 loadJSCSSFile();
 
-function serveJS(js: { content: string, hash: string, path: string }, req: IncomingMessage, res: ServerResponse) {
+function serveJS(js: JsFileState, req: IncomingMessage, res: ServerResponse) {
     if (req.url === js.path) {
         if ('if-none-match' in req.headers) {
             res.writeHead(304);
@@ -65,6 +80,20 @@ function serveJS(js: { content: string, hash: string, path: string }, req: Incom
                 'ETag': 'yes:)',
             });
             res.end(js.content);
+        }
+        return true;
+    }
+    if (req.url?.endsWith('.js.map')) {
+        if ('if-none-match' in req.headers) {
+            res.writeHead(304);
+            res.end();
+        } else {
+            res.writeHead(200, {
+                'Cache-Control': 'max-age=31536000',
+                'Content-Type': 'application/json',
+                'ETag': 'yes:)',
+            });
+            res.end(js.mapContent);
         }
         return true;
     }
