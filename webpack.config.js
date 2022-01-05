@@ -1,10 +1,14 @@
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const TerserPlugin = require('terser-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 module.exports = {
+    output: {
+        path: __dirname + '/dist',
+    },
+
     // Enable sourcemaps for debugging webpack's output.
     devtool: 'source-map',
 
@@ -19,7 +23,7 @@ module.exports = {
             {
                 test: /\.tsx?$/,
                 loader: 'ts-loader',
-//                type: 'javascript/esm', // Disabled, until #6913 is resolved
+                type: 'javascript/esm',
             },
 
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
@@ -36,10 +40,11 @@ module.exports = {
                     {
                         loader: 'postcss-loader',
                         options: {
-                            plugins: (loader) => [
-                                require('autoprefixer')(),
-                            ]
-                        }
+                            postcssOptions: {
+                                plugins: [require.resolve('autoprefixer')],
+                            },
+                            sourceMap: true,
+                        },
                     },
                 ],
             },
@@ -48,18 +53,19 @@ module.exports = {
     plugins: [
         new CleanWebpackPlugin(),
         new MiniCssExtractPlugin({
-                filename: "[name].css",
-                chunkFilename: "[name].css"
+            filename: "[name].css",
+            chunkFilename: "[name].css"
         }),
     ],
     optimization: {
         minimizer: [
-            new UglifyJsPlugin({
-                cache: true,
+            new TerserPlugin({
                 parallel: true,
-                sourceMap: true // set to true if you want JS source maps
+                terserOptions: {
+                    sourceMap: true,
+                },
             }),
-            new OptimizeCSSAssetsPlugin({})
+            new CssMinimizerPlugin(),
         ]
     },
 };
