@@ -1,8 +1,9 @@
+import {IData} from '../interfaces/IData';
+
+import {TarotAction, TarotActions} from './actions';
 import {TarotCartes} from './cartes';
 import {Card} from './enums/Card';
 import {CardColor} from './enums/CardColor';
-import {IData} from '../interfaces/IData';
-import {TarotActions} from './actions';
 
 export enum Etats {
     ATTENDANT = 'attendant',
@@ -64,7 +65,7 @@ export default class Jeu {
         return new Jeu(data);
     }
 
-    private static ordreCartes(a: Card, b: Card) {
+    private static ordreCartes(this: void, a: Card, b: Card) {
         if (a === '--' && b === '--') {
             return 0;
         }
@@ -543,7 +544,7 @@ export default class Jeu {
         return {...this.data, pli, cartes: cartesCachés, chien, cartesJoueurs, pliFait};
     }
 
-    public action(m: any, qui: number, sendToAll: () => void) {
+    public action(m: TarotAction, qui: number, sendToAll: () => void) {
         switch (m.type) {
             case TarotActions.COUPE:
                 this.coupe(qui, m.nombre);

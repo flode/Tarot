@@ -1,14 +1,16 @@
 import React from 'react';
+
 import {ResponseJeu} from '../../datastructure/responses';
-import {TarotActions} from '../actions';
-import {Etats} from '../Jeu';
-import CardStack from './CardStack';
 import Nom from '../../views/Nom';
+import {TarotAction, TarotActions} from '../actions';
+import {Etats} from '../Jeu';
+
+import CardStack from './CardStack';
 
 export interface ITableProps {
     jeu: ResponseJeu;
     moi: number;
-    onAction: (data: any) => void;
+    onAction: (data: TarotAction) => void;
 }
 
 export default class Table extends React.Component<ITableProps> {

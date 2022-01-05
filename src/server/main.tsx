@@ -1,15 +1,18 @@
-import compression from 'compression';
-import connect from 'connect';
 import {createHash} from 'crypto';
 import {readFile} from 'fs';
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import {basename} from 'path';
+
+import compression from 'compression';
+import connect from 'connect';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import send from 'send';
 import systemdSocket from 'systemd-socket';
 import {server as WebSocketServer} from 'websocket';
+
 import {Action} from '../datastructure/actions';
+
 import {createActionHandler, open, save} from './Orga';
 
 type JsFileState = {
@@ -139,8 +142,8 @@ function reactHandler(req: IncomingMessage, res: ServerResponse) {
     }
 }
 
-function servestatic(req: IncomingMessage, res: ServerResponse, next: Function) {
-    function error(err: any) {
+function servestatic(req: IncomingMessage, res: ServerResponse, next: () => void) {
+    function error(err: unknown) {
         console.error(err);
         next();
     }
@@ -159,18 +162,18 @@ function servestatic(req: IncomingMessage, res: ServerResponse, next: Function) 
 }
 
 const app = connect();
-app.use((req: IncomingMessage, res: ServerResponse, next: Function) => {
+app.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
     res.setHeader('Vary', 'Accept-Language');
     next();
 });
-app.use(compression() as (req: IncomingMessage, res: ServerResponse, next: Function) => void);
+app.use(compression() as (req: IncomingMessage, res: ServerResponse, next: () => void) => void);
 app.use(servestatic);
 app.use(reactHandler);
 
 const fdOrPort = systemdSocket() || PORT;
 const webserver = createServer(app);
 webserver.listen(fdOrPort, () => {
-    console.info('Listening on ' + fdOrPort + '...');
+    console.info(`Listening on ${String(fdOrPort)}...`);
 });
 
 const wsServer = new WebSocketServer({
@@ -183,7 +186,7 @@ const wsServer = new WebSocketServer({
     httpServer: webserver,
 });
 
-function originIsAllowed(origin: string) {
+function originIsAllowed(_origin: string) {
     // TODO put logic here to detect whether the specified origin is allowed.
     return true;
 }
@@ -195,25 +198,25 @@ wsServer.on('request', request => {
     if (!originIsAllowed(request.origin)) {
         // Make sure we only accept requests from an allowed origin
         request.reject();
-        console.debug((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+        console.debug(`${new Date().toString()} Connection from origin ${request.origin} rejected.`);
         return;
     }
 
     const connection = request.accept('tarot-protocol', request.origin);
-    console.debug((new Date()) + ' Connection accepted.');
+    console.debug(`${new Date().toString()} Connection accepted.`);
 
     const actionHandler = createActionHandler(connection);
 
     connection.on('message', message => {
         if (message.type === 'utf8' && message.utf8Data) {
             console.debug('Received Message: ' + message.utf8Data);
-            const m: Action = JSON.parse(message.utf8Data);
+            const m = JSON.parse(message.utf8Data) as Action;
             console.debug(m);
             actionHandler(m);
         }
     });
     connection.on('close', (reasonCode, description) => {
-        console.debug((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected:', reasonCode, description);
+        console.debug(`${new Date().toString()} Peer ${connection.remoteAddress} disconnected:`, reasonCode, description);
     });
 });
 

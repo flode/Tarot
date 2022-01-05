@@ -1,5 +1,7 @@
 import React from 'react';
+
 import {Card as CardEnum} from '../enums/Card';
+
 import Card from './Card';
 
 export interface ICardStackProps {

@@ -1,26 +1,28 @@
 import {readFile, writeFile} from 'fs';
+
 import {connection as WebsocketConnection} from 'websocket';
+
 import {Action, Actions} from '../datastructure/actions';
 import {ServerResponses} from '../datastructure/responses';
 import {IData} from '../interfaces/IData';
 import Jeu, {Etats} from '../tarot/Jeu';
 
 interface ISavedGame {
-    jeux: { jeuData: IData|null, guids: string[] }[];
-    known_guids: { [guid: string]: { jeuId: number, nom: string } };
+    jeux: { jeuData: IData|null; guids: string[] }[];
+    known_guids: { [guid: string]: { jeuId: number; nom: string } };
     chat_attendant: string;
 }
 
 const jeux: (Jeu|null)[] = [];
 
-let knownGuids: { [guid: string]: { jeu: Jeu | null, nom: string, connection: WebsocketConnection | null } } = {};
+let knownGuids: { [guid: string]: { jeu: Jeu | null; nom: string; connection: WebsocketConnection | null } } = {};
 
 let chatAttendant = '';
 
 export function save(file: string, callback: () => void) {
     const savedKnownGuids: ISavedGame['known_guids'] = {};
     for (const guid in knownGuids) {
-        if (knownGuids.hasOwnProperty(guid)) {
+        if (Object.prototype.hasOwnProperty.call(knownGuids, guid)) {
             const jeuId = jeux.findIndex(j => j === knownGuids[guid].jeu);
             savedKnownGuids[guid] = {
                 jeuId,
@@ -46,11 +48,11 @@ export function save(file: string, callback: () => void) {
 export function open(file: string, callback?: () => void) {
     readFile(file, (err, content) => {
         if (!err) {
-            const data: ISavedGame = JSON.parse(content.toString());
+            const data = JSON.parse(content.toString()) as ISavedGame;
             data.jeux.forEach(({jeuData, guids}) => jeux.push(jeuData ? new Jeu(jeuData, guids) : null));
             const loadedKnownGuids: typeof knownGuids = {};
             for (const guid in data.known_guids) {
-                if (data.known_guids.hasOwnProperty(guid)) {
+                if (Object.prototype.hasOwnProperty.call(data.known_guids, guid)) {
                     loadedKnownGuids[guid] = {
                         jeu: jeux[data.known_guids[guid].jeuId],
                         nom: data.known_guids[guid].nom,
@@ -96,11 +98,12 @@ export function createActionHandler(connection: WebsocketConnection) {
                 }
                 break;
             }
-            case Actions.CREER_JEU:
+            case Actions.CREER_JEU: {
                 const newJeu = Jeu.creeNouveauJeu();
                 jeux.push(newJeu);
                 envoieTousAttendant();
                 break;
+            }
             case Actions.QUITTER: {
                 if (guid && guid in knownGuids) {
                     delete knownGuids[guid];
@@ -212,7 +215,7 @@ export function createActionHandler(connection: WebsocketConnection) {
 
     function numeroJoueur() {
         if (!jeu || !jeu.data) return -1;
-        return jeu.guids.findIndex(g => g===guid)
+        return jeu.guids.findIndex(g => g===guid);
     }
 }
 
@@ -223,10 +226,14 @@ function sendPasDeJoueurs(con: WebsocketConnection) {
 function envoieTousAttendant() {
     const nomJoueurs = Object.values(knownGuids).filter(g => !g.jeu).map(g=>g.nom);
     const jeu = jeux
-        .map((j,i) => {return {jeu: j, i}})
+        .map((j,i) => {return {jeu: j, i};})
         .filter(j => j.jeu)
-        .map(j => { return {jeuId: j.i, active: j.jeu?.data.etat!==Etats.ATTENDANT, joueurs: (j.jeu ? j.jeu.guids.map(g=>knownGuids[g].nom) : [])}; });
-    Object.values(knownGuids).filter(g => !g.jeu).forEach(g => g.connection?.sendUTF(JSON.stringify(ServerResponses.makeJoueurJoint(nomJoueurs, jeu, chatAttendant))));
+        .map(j => {
+            return {jeuId: j.i, active: j.jeu?.data.etat!==Etats.ATTENDANT, joueurs: (j.jeu ? j.jeu.guids.map(g=>knownGuids[g].nom) : [])};
+        });
+    Object.values(knownGuids)
+        .filter(g => !g.jeu)
+        .forEach(g => g.connection?.sendUTF(JSON.stringify(ServerResponses.makeJoueurJoint(nomJoueurs, jeu, chatAttendant))));
 }
 
 export function sendToAll(jeu: Jeu) {

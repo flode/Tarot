@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {Card as CardEnum} from '../enums/Card';
 import Jeu from '../Jeu';
 
@@ -12,14 +13,14 @@ export default class Card extends React.Component<ICardProps> {
         card: '--',
     };
 
-    private static findRowColumn(card: CardEnum): { row: number, column: number } {
+    private static findRowColumn(card: CardEnum): { row: number; column: number } {
         switch (card.substring(0, 1)) {
             case 'J':
                 return {
                     column: 7,
                     row: 1,
                 };
-            case 'A':
+            case 'A': {
                 const atout = parseInt(card.substring(1), 10);
                 if (atout <= 14) {
                     return {
@@ -32,7 +33,8 @@ export default class Card extends React.Component<ICardProps> {
                         row: 1,
                     };
                 }
-            default:
+            }
+            default: {
                 let row: number | undefined;
                 switch (card.substring(0, 1)) {
                     case 'P':
@@ -54,6 +56,7 @@ export default class Card extends React.Component<ICardProps> {
                     column: Jeu.cartesType[card.substring(1)],
                     row,
                 };
+            }
         }
     }
 
@@ -65,7 +68,7 @@ export default class Card extends React.Component<ICardProps> {
         const {row, column} = Card.findRowColumn(card);
         const style = {
             background: 'url(/tarot/img/tarotcards.jpg)',
-            backgroundPosition: (-57 * column) + 'px ' + (-105 * row) + 'px',
+            backgroundPosition: `${-57 * column}px ${-105 * row}px`,
             height: '105px',
             width: '57px',
         };

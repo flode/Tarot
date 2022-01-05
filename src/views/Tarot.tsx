@@ -1,14 +1,17 @@
 import React from 'react';
 import {v4 as uuidv4} from 'uuid';
 import websocket from 'websocket';
+
 import {Actions} from '../datastructure/actions';
 import {ResponseJeu, ServerResponse, ServerResponses} from '../datastructure/responses';
 import {Etats} from '../tarot/Jeu';
-import Chat from './Chat';
-import Nom from './Nom';
 import Table from '../tarot/views/Table';
 
-const w3cwebsocket: typeof WebSocket = (websocket as any).w3cwebsocket;
+import Chat from './Chat';
+import Nom from './Nom';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const w3cwebsocket = (websocket as any as {w3cwebsocket: typeof WebSocket}).w3cwebsocket;
 
 interface ITarotState {
     chat_attendant: string;
@@ -18,10 +21,10 @@ interface ITarotState {
     joueurs: string[] | null;
     moi: number | null;
     nomJoueur: string;
-    jeux: {jeuId: number, active: boolean, joueurs: string[]}[];
+    jeux: {jeuId: number; active: boolean; joueurs: string[]}[];
 }
 
-export default class Tarot extends React.Component<{}, ITarotState> {
+export default class Tarot extends React.Component<object, ITarotState> {
     public state: ITarotState = {
         chat_attendant: '',
         client: null,
@@ -78,7 +81,7 @@ export default class Tarot extends React.Component<{}, ITarotState> {
 
         client.onmessage = e => {
             if (typeof e.data === 'string') {
-                const m: ServerResponse = JSON.parse(e.data);
+                const m = JSON.parse(e.data) as  ServerResponse;
                 console.debug(m);
                 switch (m.type) {
                     case ServerResponses.JEU:
@@ -96,7 +99,7 @@ export default class Tarot extends React.Component<{}, ITarotState> {
         };
     }
 
-    public componentDidUpdate(prevProps: {}, prevState: ITarotState) {
+    public componentDidUpdate(prevProps: never, prevState: ITarotState) {
         if (prevState.jeu === null && this.state.jeu === null) {
             if (this.state.chat_attendant !== prevState.chat_attendant) {
                 notifyUser('Nouveau chat!', 'blop');
@@ -140,10 +143,12 @@ export default class Tarot extends React.Component<{}, ITarotState> {
                 </form>;
             } else {
                 return <div>
-                    {this.state.joueurs.length} {this.state.joueurs.length === 1 ? 'joueur attend' : 'joueurs attendent'}: <Nom nom={this.state.joueurs}/><br/>
+                    {this.state.joueurs.length} {this.state.joueurs.length === 1 ? 'joueur attend' : 'joueurs attendent'}:{' '}
+                    <Nom nom={this.state.joueurs}/><br/>
                     <input type="button" value="Quitter"
                            onClick={() => client.send(JSON.stringify(Actions.makeQuitter()))}/>
-                    <div><input type="button" value="Nouveau table" onClick={() => client.send(JSON.stringify(Actions.makeCreerJeu()))}/></div>
+                    <div><input type="button" value="Nouveau table"
+                        onClick={() => client.send(JSON.stringify(Actions.makeCreerJeu()))}/></div>
                     {this.state.jeux.reverse().map(jeu => <div className={'table ' + (jeu.active ? 'active' : 'joinable')} key={jeu.jeuId}>
                         <ul>
                             {jeu.joueurs.map((joueur,i) => <li key={i}>{joueur}</li>)}

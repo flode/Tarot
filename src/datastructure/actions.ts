@@ -1,15 +1,16 @@
+import {TarotAction} from '../tarot/actions';
 
 export type Action =
     { type: typeof Actions.CREER_JEU } |
     { type: typeof Actions.START } |
-    { type: typeof Actions.REJOINDRE, guid: string } |
+    { type: typeof Actions.REJOINDRE; guid: string } |
     { type: typeof Actions.QUITTER } |
-    { type: typeof Actions.JOINDRE, guid: string, nomJoueur: string } |
-    { type: typeof Actions.JOINDRE_JEU, jeuId: number } |
-    { type: typeof Actions.ACTION, data: any } |
+    { type: typeof Actions.JOINDRE; guid: string; nomJoueur: string } |
+    { type: typeof Actions.JOINDRE_JEU; jeuId: number } |
+    { type: typeof Actions.ACTION; data: TarotAction } |
     { type: typeof Actions.QUITTER_JEU } |
     { type: typeof Actions.PROCHAIN_JEU } |
-    { type: typeof Actions.SEND_MESSAGE, message: string };
+    { type: typeof Actions.SEND_MESSAGE; message: string };
 
 export class Actions {
     public static readonly CREER_JEU = 'creerJeu';
@@ -35,7 +36,7 @@ export class Actions {
 
     public static readonly makeJoindreJeu = (jeuId: number) => ({type: Actions.JOINDRE_JEU, jeuId});
 
-    public static readonly makeAction = (data: any) => ({type: Actions.ACTION,data});
+    public static readonly makeAction = (data: TarotAction) => ({type: Actions.ACTION, data});
 
     public static readonly makeQuitterJeu = () => ({type: Actions.QUITTER_JEU});
 
