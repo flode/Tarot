@@ -133,26 +133,23 @@ export default class Jeu {
         }
 
         if (couleurMettre !== 'A') {
-            for (const c of cartes) {
-                if (c.substr(0, 1) === 'A') {
-                    if (carteCouleur !== 'A') {
-                        return false;
-                    }
-                    if (!hautAtout) {
-                        return true;
-                    }
-                    const catout = parseInt(c.substr(1), 10);
-                    const carteAtout = parseInt(carte.substr(1), 10);
-                    if (carteAtout > hautAtout) {
-                        return true;
-                    }
-                    if (catout > carteAtout) {
-                        return false;
+            if (carteCouleur === 'A' && hautAtout) {
+                const atout = parseInt(carte.substr(1), 10);
+                if (atout < hautAtout) {
+                    for (const c of cartes) {
+                        if (c.substring(0, 1) === 'A' && parseInt(c.substr(1), 10) > hautAtout) {
+                            return false;
+                        }
                     }
                 }
             }
+        } else {
+            for (const c of cartes) {
+                if (c.substr(0, 1) === 'A') {
+                    return false;
+                }
+            }
         }
-
         return true;
     }
 
