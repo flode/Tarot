@@ -35,7 +35,7 @@
     "eslint-plugin-import": "2.25.x",
     "eslint-plugin-jsdoc": "37.5.x",
     "mini-css-extract-plugin": "~2.4.5",
-    "npm-check-updates": "^12.1.0",
+    "npm-check-updates": "^16.6.2",
     "postcss-loader": "~6.2.1",
     "source-map-loader": "~3.0.1",
     "ts-loader": "~9.2.6",
